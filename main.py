@@ -25,4 +25,10 @@ response = client.chat.completions.create(
     ],
 )
 
+if not response.usage:
+    raise RuntimeError("Usage response invalid")
+
 print(response.choices[0].message.content)
+print("\n")
+print(f"Prompt tokens:{response.usage.prompt_tokens}")
+print(f"Response tokens:{response.usage.completion_tokens}")
