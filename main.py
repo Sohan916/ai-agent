@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
+from prompts import system_prompt
+
 
 def main():
     load_dotenv()
@@ -24,6 +26,7 @@ def main():
     args = parser.parse_args()
 
     messages: list[ChatCompletionMessageParam] = [
+        {"role": "system", "content": system_prompt},
         {
             "role": "user",
             "content": args.user_prompt,
@@ -42,7 +45,7 @@ def main():
         print(f"User prompt:{args.user_prompt}")
         print(f"Prompt tokens:{response.usage.prompt_tokens}")
         print(f"Response tokens:{response.usage.completion_tokens}")
-        print("/n")
+        print("\n")
 
     print(response.choices[0].message.content)
 
