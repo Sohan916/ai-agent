@@ -1,6 +1,6 @@
 import argparse
-import json
 import os
+import sys
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -35,37 +35,47 @@ def main():
         },
     ]
 
-    response = client.chat.completions.create(
-        model="openrouter/free", messages=messages, tools=available_functions
-    )
+    for _ in range(20):
+        print("new loop")
+        response = client.chat.completions.create(
+            model="openrouter/free", messages=messages, tools=available_functions
+        )
 
-    if not response.usage:
-        raise RuntimeError("Usage response invalid")
+        if not response.usage:
+            raise RuntimeError("Usage response invalid")
 
-    message = response.choices[0].message
+        message = response.choices[0].message
+        messages.append(message)
 
-    if message.tool_calls:
-        for tool_call in message.tool_calls:
-            if tool_call.type != "function":
-                continue
-            result_message = call_function(tool_call, verbose=args.verbose)
+        if message.tool_calls:
+            for tool_call in message.tool_calls:
+                if tool_call.type != "function":
+                    continue
+                result_message = call_function(tool_call, verbose=args.verbose)
 
-            if not result_message["content"]:
-                raise Exception(
-                    f"Empty result from function: {tool_call.function.name}"
-                )
+                if not result_message["content"]:
+                    raise Exception(
+                        f"Empty result from function: {tool_call.function.name}"
+                    )
 
-            if args.verbose:
-                print(f"-> {result_message['content']}")
+                messages.append(result_message)
+                if args.verbose:
+                    print(f"-> {result_message['content']}")
 
-    elif args.verbose == True:
-        print(f"User prompt:{args.user_prompt}")
-        print(f"Prompt tokens:{response.usage.prompt_tokens}")
-        print(f"Response tokens:{response.usage.completion_tokens}")
-        print("\n")
+        elif args.verbose == True:
+            print(f"User prompt:{args.user_prompt}")
+            print(f"Prompt tokens:{response.usage.prompt_tokens}")
+            print(f"Response tokens:{response.usage.completion_tokens}")
+            print("\n")
+            print(response.choices[0].message.content)
+            return
 
-    else:
-        print(response.choices[0].message.content)
+        else:
+            print(response.choices[0].message.content)
+            return
+
+    print("Reached maximum number of iterations")
+    sys.exit(1)
 
 
 if __name__ == "__main__":
